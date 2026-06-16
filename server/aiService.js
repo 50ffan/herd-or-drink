@@ -114,7 +114,7 @@ const FALLBACK_PROMPTS = [
   'Vad är det första du packar inför en resa?',
   'Vad säger man när man är påkommen med att ljuga?',
 
-  // Vem i gruppen (majoritetssvar = hjorden)
+  // Vem i gruppen (majoritetssvar = flocken)
   'Vem i gruppen skulle överleva längst i en zombieapokalyps?',
   'Vem i gruppen skulle klara sig bäst på en öde ö utan teknik?',
   'Vem i gruppen skulle vara bäst på att flörta sig ur en parkeringsbot?',
@@ -171,7 +171,7 @@ async function groupAnswers(answers) {
       max_tokens: 800,
       messages: [{
         role: 'user',
-        content: `Du analyserar svar i ett sällskapsspel. Gruppera dessa svar efter likhet (ignorera stavfel, synonymer, singular/plural, versaler). Hitta "hjorden" (störst grupp). Skriv en kort rolig roast (max 20 ord, på svenska, med spelarnamn).\n\nSvar:\n${answersText}\n\nSvara BARA med JSON (inga kodblock):\n{\n  "groups": [\n    {\n      "label": "kortfattad gruppetikett",\n      "members": [{"name": "spelarnamn", "text": "deras svar", "responseTime": 1.2, "socketId": ""}]\n    }\n  ],\n  "herdLabel": "etiketten på den största gruppen eller null vid kaos",\n  "roast": "rolig roast på svenska med spelarnamn"\n}`
+        content: `Du analyserar svar i ett sällskapsspel. Gruppera dessa svar efter likhet (ignorera stavfel, synonymer, singular/plural, versaler). Hitta "flocken" (störst grupp). Skriv en kort rolig roast (max 20 ord, på svenska, med spelarnamn).\n\nSvar:\n${answersText}\n\nSvara BARA med JSON (inga kodblock):\n{\n  "groups": [\n    {\n      "label": "kortfattad gruppetikett",\n      "members": [{"name": "spelarnamn", "text": "deras svar", "responseTime": 1.2, "socketId": ""}]\n    }\n  ],\n  "herdLabel": "etiketten på den största gruppen eller null vid kaos",\n  "roast": "rolig roast på svenska med spelarnamn"\n}`
       }]
     });
 

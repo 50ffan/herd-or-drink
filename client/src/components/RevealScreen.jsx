@@ -35,7 +35,7 @@ export default function RevealScreen({ revealData, isHost, playerName }) {
           <div key={i} className="card flex-col gap-sm">
             <div className="flex-row gap-sm" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
               <span style={{ fontWeight: 700 }}>{group.label}</span>
-              {group.isHerd && <span className="herd-badge">🐑 Hjorden</span>}
+              {group.isHerd && <span className="herd-badge">🐑 Flocken</span>}
             </div>
             <div className="flex-col gap-sm" style={{ marginTop: 4 }}>
               {group.members.map((m, j) => (

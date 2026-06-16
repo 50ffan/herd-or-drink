@@ -67,7 +67,7 @@ const ROAST_TEMPLATES = [
   (winner) => `${winner} är verkligen den mest förutsägbara personen i rummet – men förutsägbarhet är en dygd.`,
   (winner) => `Svaren här är som en IKEA-manual – alla tror sig förstå, men det är bara ${winner} som faktiskt gör det.`,
   (winner) => `Klart att ${winner} vinner – de har övat på att vara mainstream sedan dagis.`,
-  (winner) => `${winner} och hjorden – beviset på att Sverige faktiskt är ett kollektivistiskt samhälle.`,
+  (winner) => `${winner} och flocken – beviset på att Sverige faktiskt är ett kollektivistiskt samhälle.`,
   (winner) => `Inte ens ett AI kan komma på en roligare grupp, men ${winner} tar hem vinsten ändå.`,
 ];
 const CHAOS_ROASTS = [

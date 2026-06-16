@@ -21,7 +21,7 @@ export default function HomeScreen({ onStats, onHowToPlay }) {
     <div className="screen flex-col gap-lg" style={{ justifyContent: 'center' }}>
       <div className="text-center" style={{ marginBottom: 8 }}>
         <div style={{ fontSize: '3.5rem', marginBottom: 8 }}>🐑🍺</div>
-        <h1>Herd or Drink</h1>
+        <h1>Great Minds Think Alike</h1>
         <p className="text-muted" style={{ marginTop: 8, fontSize: '1rem' }}>
           Det svenska sällskapsspelet
         </p>

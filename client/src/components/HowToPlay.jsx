@@ -12,23 +12,23 @@ export default function HowToPlay({ onBack }) {
     },
     {
       icon: '🐑',
-      title: 'Hitta hjorden',
-      text: 'AI:n grupperar svaren efter likhet. Den största gruppen är "hjorden". Är du med i hjorden? Bra — du förlorar klunkar från din hemliga klunkbank istället för att dricka nu.'
+      title: 'Hitta flocken',
+      text: 'AI:n grupperar svaren efter likhet. Den största gruppen är "flocken". Är du med i flocken? Bra — du förlorar klunkar från din hemliga klunkbank istället för att dricka nu.'
     },
     {
       icon: '⚡',
       title: 'Snabbhet belönas',
-      text: 'I hjorden räknas ordningen:\n🥇 Snabbast → -3 klunkar från banken\n🥈 Näst snabbast → -2 klunkar\n🥉 Resten → -1 klunk'
+      text: 'I flocken räknas ordningen:\n🥇 Snabbast → -3 klunkar från banken\n🥈 Näst snabbast → -2 klunkar\n🥉 Resten → -1 klunk'
     },
     {
       icon: '🍺',
-      title: 'Utanför hjorden',
-      text: 'Svarade du annorlunda än hjorden? Då dricker du 2 klunkar NU direkt — men din klunkbank påverkas inte.'
+      title: 'Utanför flocken',
+      text: 'Svarade du annorlunda än flocken? Då dricker du 2 klunkar NU direkt — men din klunkbank påverkas inte.'
     },
     {
       icon: '🌀',
       title: 'Kaosrunda',
-      text: 'Om alla svarar olika (ingen hjord) är det kaosrunda! Alla dricker ett slumpmässigt antal klunkar (2–6). Skål!'
+      text: 'Om alla svarar olika (ingen flock) är det kaosrunda! Alla dricker ett slumpmässigt antal klunkar (2–6). Skål!'
     },
     {
       icon: '🏆',
@@ -54,7 +54,7 @@ export default function HowToPlay({ onBack }) {
 
       <div className="card" style={{ background: 'rgba(233,69,96,0.1)', border: '1px solid rgba(233,69,96,0.3)' }}>
         <p style={{ fontWeight: 700, color: '#ff8fa3', textAlign: 'center' }}>
-          🐑 Tänk som hjorden — annars dricker du! 🍺
+          🐑 Tänk som flocken — annars dricker du! 🍺
         </p>
       </div>
 
