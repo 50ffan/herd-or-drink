@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import socket from '../socket'
 
-export default function HomeScreen() {
+export default function HomeScreen({ onStats }) {
   const [mode, setMode] = useState(null) // null | 'join'
   const [code, setCode] = useState('')
   const [name, setName] = useState('')
@@ -32,6 +32,9 @@ export default function HomeScreen() {
           </button>
           <button className="btn btn-secondary" onClick={() => setMode('join')}>
             🔑 Gå med i spel
+          </button>
+          <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888', marginTop: '8px' }} onClick={onStats}>
+            📊 Topplista
           </button>
         </div>
       )}

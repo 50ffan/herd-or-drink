@@ -5,6 +5,7 @@ const { Server } = require('socket.io');
 const path = require('path');
 const { createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame, getAllPlayerNames } = require('./gameState');
 const { generatePrompt, groupAnswers } = require('./aiService');
+const { saveGameResult } = require('./supabase');
 
 const app = express();
 const server = http.createServer(app);
@@ -58,6 +59,13 @@ async function doReveal(gameCode) {
       io.to(getRoom(gameCode)).emit('game_ended', {
         winner: revealData.winner,
         finalPlayers
+      });
+      // Save to Supabase
+      saveGameResult({
+        gameCode,
+        rounds: g.roundHistory.length,
+        players: finalPlayers,
+        winner: revealData.winner
       });
     }, 1000);
   }
