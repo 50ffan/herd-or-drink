@@ -17,9 +17,15 @@ const FALLBACK_PROMPTS = [
   'Vad är det bästa sättet att flörta?',
   'Vad är ett deal breaker i ett förhållande?',
   'Vad är det mest romantiska man kan göra?',
-  'Hur tar man upp att man vill ha ett förhållande?',
-  'Vad är skillnaden mellan kärlek och förälskelse?',
   'Vad gör man om man gillar sin bästa väns ex?',
+
+  // Spicy & vuxet
+  'Nämn en grej folk ljuger om på dejtingappar.',
+  'Nämn ett djur som hade haft sämst omdöme på Tinder.',
+  'Nämn en plats man absolut inte borde ha sex, trots frestelsen.',
+  'Nämn något som garanterat dödar stämningen i sovrummet.',
+  'Nämn ett ord som låter helt oskyldigt men blir supersexigt om man säger det rätt.',
+  'Nämn en grej man absolut inte vill att partnern hittar i mobilen.',
 
   // Jobb & vardag
   'Vad är den värsta ursäkten för att komma för sent till jobbet?',
@@ -31,8 +37,6 @@ const FALLBACK_PROMPTS = [
   'Vad är det jobbigaste med att bo med någon?',
   'Vad är det bästa med att jobba hemifrån?',
   'Vad gör du när du inte orkar laga mat?',
-  'Vad är det värsta med måndagar?',
-  'Vad är det bästa med fredagar?',
   'Hur firar du att det är fredag?',
 
   // Pengar & drömmar
@@ -42,18 +46,23 @@ const FALLBACK_PROMPTS = [
   'Vad är din hemliga talang?',
   'Om du kunde bli expert på något på en dag, vad skulle det vara?',
   'Vad är din drömsemester?',
-  'Vilket superkraft skulle du välja?',
   'Om du kunde leva var som helst i världen, var skulle det vara?',
-  'Vad är det första du gör om du vaknar upp som miljonär?',
   'Om du kunde tillbringa en dag med vem som helst, levande eller död, vem?',
+
+  // Superkrafter & tokigt
+  'Vilket superkraft skulle du välja?',
+  'Nämn en superkraft som i praktiken är helt värdelös.',
+  'Nämn ett ljud som garanterat väcker hela huset.',
+  'Nämn en grönsak du skulle kasta på någon i ett bråk.',
+  'Nämn en plats det vore extremt opassande att ta selfies.',
+  'Nämn något pinsamt man kan hitta i någons sökhistorik.',
 
   // Mat & dryck
   'Vad är det absolut sämsta pizzatoppingen?',
   'Vad är den bästa maten att äta bakfull?',
   'Vad är din hemliga skuldbelagda matnöje?',
-  'Vad är den konstiga matkombo du faktiskt gillar?',
+  'Vad är den konstigaste matkombo du faktiskt gillar?',
   'Vad är det mest överskattade maten?',
-  'Vad är din favoriträtt som din mamma lagar?',
   'Vad är det sämsta du någonsin ätit?',
   'Vad är din go-to snacks sent på natten?',
   'Vad skulle du äta till din sista måltid?',
@@ -67,14 +76,12 @@ const FALLBACK_PROMPTS = [
   'Vad är din mest kaotiska festupplevelse?',
   'Vad är det konstiga du gör som du tror ingen annan gör?',
   'Vad är det mest impulsiva du någonsin gjort?',
-  'Vad är din mest genanta missuppfattning?',
   'Vad är det värsta du sagt i ett textmeddelande som gick till fel person?',
 
   // Sverige & kultur
   'Hur imponerar man på en svensk?',
   'Vad är det mest svenska man kan göra?',
   'Vad säger man på en typisk svensk förfest?',
-  'Vad är den bästa sommarminnet från Sverige?',
   'Vad är det mest svenska problemet man kan ha?',
   'Vad är det bästa med svenska sommaren?',
   'Vad är skillnaden mellan en svensk och en utlänning på fest?',
@@ -84,13 +91,10 @@ const FALLBACK_PROMPTS = [
   'Vad är det första du gör på en ledig lördag?',
   'Vad är det bästa sättet att ta sig ur en tråkig fest?',
   'Vad gör du om du inte känner någon på en fest?',
-  'Vad är det värsta med grupprojekt?',
   'Hur hanterar du en besvärlig granne?',
-  'Vad är det bästa ursäkten för att tacka nej till en inbjudan?',
   'Vad är den mest acceptabla lögnen man kan säga?',
   'Hur reagerar du när du glömmer en persons namn?',
   'Vad gör du om du ser en vän kyssa någon annans partner?',
-  'Vad är det bästa sättet att avsluta ett tråkigt möte?',
 
   // Teknik & moderna livet
   'Vad är det första du gör när du vaknar?',
@@ -98,34 +102,44 @@ const FALLBACK_PROMPTS = [
   'Vad är det mest meningslösa du kollat på YouTube?',
   'Vad är din mest pinsamma Spotify-lyssningshistorik?',
   'Vad är det värsta med sociala medier?',
-  'Vad är det bästa med sociala medier?',
-  'Hur många appar har du som du aldrig använder?',
   'Vad är din hemliga guilty pleasure-serie?',
 
-  // Djupare frågor (lite spicy)
-  'Vad är det mest överskattade aktiviteten?',
-  'Vad är det bästa man kan säga när man vill imponera?',
+  // Djupare frågor
   'Vad är din absoluta gräns i ett förhållande?',
   'Vad är det sista du tänker på innan du somnar?',
   'Vad är din definition av lycka?',
   'Vad är det bästa rådet du fått av dina föräldrar?',
-  'Vad är det du ångrar mest?',
   'Vad är något du aldrig berättat för dina föräldrar?',
   'Vad är det mest karaktärsdanande som hänt dig?',
   'Vad är det första du packar inför en resa?',
   'Vad säger man när man är påkommen med att ljuga?',
+
+  // Vem i gruppen (majoritetssvar = hjorden)
+  'Vem i gruppen skulle överleva längst i en zombieapokalyps?',
+  'Vem i gruppen skulle klara sig bäst på en öde ö utan teknik?',
+  'Vem i gruppen skulle vara bäst på att flörta sig ur en parkeringsbot?',
+
+  // Drickande (roliga bonusrundar)
+  'Vem borde ta en shot just nu, ingen anledning behövs?',
+  'Vem borde dricka klart sitt glas innan nästa runda?',
+  'Vem får dela ut 5 klunkar till valfri person i rummet?',
+  'Vem ska ta en shot åt hela gruppen om majoriteten missar denna fråga?',
 ];
 
-let promptIndex = 0;
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
 
 async function generatePrompt(usedPrompts = []) {
   if (!process.env.ANTHROPIC_API_KEY) {
-    // fallback: rotate through list
     const available = FALLBACK_PROMPTS.filter(p => !usedPrompts.includes(p));
-    const pool = available.length > 0 ? available : FALLBACK_PROMPTS;
-    const p = pool[promptIndex % pool.length];
-    promptIndex++;
-    return p;
+    const pool = shuffle(available.length > 0 ? available : FALLBACK_PROMPTS);
+    return pool[0];
   }
 
   try {
@@ -142,10 +156,8 @@ async function generatePrompt(usedPrompts = []) {
   } catch (e) {
     console.error('generatePrompt failed:', e.message);
     const available = FALLBACK_PROMPTS.filter(p => !usedPrompts.includes(p));
-    const pool = available.length > 0 ? available : FALLBACK_PROMPTS;
-    const p = pool[promptIndex % pool.length];
-    promptIndex++;
-    return p;
+    const pool = shuffle(available.length > 0 ? available : FALLBACK_PROMPTS);
+    return pool[0];
   }
 }
 
