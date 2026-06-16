@@ -1,16 +1,16 @@
 import { useState, useEffect } from 'react'
 import socket from '../socket'
 
-export default function RoundScreen({ prompt, duration, roundNumber }) {
+export default function RoundScreen({ currentPrompt, roundDuration, roundNumber }) {
   const [answer, setAnswer] = useState('')
   const [submitted, setSubmitted] = useState(false)
-  const [timeLeft, setTimeLeft] = useState(duration)
+  const [timeLeft, setTimeLeft] = useState(roundDuration)
 
   useEffect(() => {
     setAnswer('')
     setSubmitted(false)
-    setTimeLeft(duration)
-  }, [prompt, duration])
+    setTimeLeft(roundDuration)
+  }, [currentPrompt, roundDuration])
 
   useEffect(() => {
     if (timeLeft <= 0) return
@@ -24,33 +24,25 @@ export default function RoundScreen({ prompt, duration, roundNumber }) {
     setSubmitted(true)
   }
 
-  const urgent = timeLeft <= 5 && timeLeft > 0
+  const urgent = timeLeft <= 5
 
   return (
-    <div style={{ width: '100%', paddingTop: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <span style={{ color: '#888', fontSize: '14px' }}>Runda {roundNumber}</span>
-        <div style={{ fontSize: '36px', fontWeight: 900, color: urgent ? '#ff6b6b' : '#e94560', fontVariantNumeric: 'tabular-nums' }}>
-          {timeLeft}s
-        </div>
+    <div className="screen flex-col gap-lg">
+      <div className="flex-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+        <span className="text-muted text-sm">Runda {roundNumber}</span>
+        <div className={`timer-ring ${urgent ? 'urgent' : ''}`}>{timeLeft}s</div>
       </div>
 
-      <div style={{
-        background: '#16213e', borderRadius: '16px', padding: '28px',
-        marginBottom: '24px', minHeight: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center'
-      }}>
-        <p style={{ fontSize: '22px', fontWeight: 600, lineHeight: 1.4, textAlign: 'center' }}>{prompt}</p>
+      <div className="card" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p style={{ fontSize: '1.3rem', fontWeight: 600, lineHeight: 1.4, textAlign: 'center' }}>
+          {currentPrompt}
+        </p>
       </div>
 
       {!submitted ? (
-        <>
+        <div className="flex-col gap-md">
           <input
-            style={{
-              display: 'block', width: '100%', background: '#0f3460',
-              border: '2px solid #7c3aed', borderRadius: '12px', color: 'white',
-              padding: '14px 16px', fontSize: '17px', fontFamily: 'inherit',
-              outline: 'none', marginBottom: '12px'
-            }}
+            type="text"
             placeholder="Skriv ditt svar..."
             value={answer}
             onChange={e => setAnswer(e.target.value)}
@@ -60,24 +52,17 @@ export default function RoundScreen({ prompt, duration, roundNumber }) {
             autoFocus
           />
           <button
+            className="btn btn-primary"
             onClick={submit}
             disabled={!answer.trim() || timeLeft === 0}
-            style={{
-              display: 'block', width: '100%', background: '#e94560', color: 'white',
-              border: 'none', borderRadius: '12px', padding: '16px', fontSize: '18px',
-              fontWeight: 'bold', cursor: 'pointer', minHeight: '54px',
-              opacity: (!answer.trim() || timeLeft === 0) ? 0.4 : 1
-            }}
-          >Skicka svar →</button>
-        </>
+          >
+            Skicka svar →
+          </button>
+        </div>
       ) : (
-        <div style={{
-          background: 'rgba(34,197,94,0.12)', border: '1px solid rgba(34,197,94,0.4)',
-          borderRadius: '14px', padding: '24px', textAlign: 'center'
-        }}>
-          <div style={{ fontSize: '36px', marginBottom: '8px' }}>✅</div>
-          <p style={{ color: '#34d399', fontWeight: 700, fontSize: '18px' }}>Svar skickat!</p>
-          <p style={{ color: '#888', marginTop: '6px', fontSize: '14px' }}>Väntar på de andra...</p>
+        <div className="card text-center animate-pulse" style={{ background: 'rgba(52,211,153,0.1)', border: '1px solid rgba(52,211,153,0.3)' }}>
+          <p style={{ color: '#34d399', fontWeight: 600 }}>✅ Svar skickat!</p>
+          <p className="text-muted text-sm" style={{ marginTop: 4 }}>Väntar på de andra...</p>
         </div>
       )}
     </div>

@@ -1,25 +1,28 @@
-export default function LobbyPlayer({ gameCode, playerName, players }) {
+export default function LobbyPlayer({ playerName, players }) {
   return (
-    <div style={{ width: '100%', paddingTop: '48px', textAlign: 'center' }}>
-      <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
-      <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Hej, {playerName}!</h2>
-      <p style={{ color: '#888', marginBottom: '32px' }}>Spelkod: <strong style={{ color: '#e94560' }}>{gameCode}</strong></p>
-      <p style={{ color: '#aaa' }}>Väntar på att värden startar spelet...</p>
+    <div className="screen flex-col gap-lg" style={{ justifyContent: 'center' }}>
+      <div className="text-center">
+        <div style={{ fontSize: '3rem', marginBottom: 16 }}>⏳</div>
+        <h2>Hej, {playerName}!</h2>
+        <p className="text-muted" style={{ marginTop: 8 }}>
+          Väntar på att värden startar spelet...
+        </p>
+      </div>
 
-      {players.length > 0 && (
-        <div style={{ background: '#16213e', borderRadius: '14px', padding: '20px', marginTop: '28px', textAlign: 'left' }}>
-          <h3 style={{ color: '#7c3aed', marginBottom: '12px', fontSize: '14px', textTransform: 'uppercase' }}>Spelare i lobbyn</h3>
+      <div className="card flex-col gap-md">
+        <h3>Spelare i lobbyn</h3>
+        <div className="flex-col gap-sm">
           {players.map((name, i) => (
-            <div key={i} style={{
-              background: name === playerName ? 'rgba(233,69,96,0.2)' : '#0f3460',
-              border: name === playerName ? '1px solid #e94560' : '1px solid transparent',
-              borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', fontWeight: 600
-            }}>
-              {name === playerName ? '⭐ ' : '👤 '}{name}
+            <div key={i} className="player-chip" style={name === playerName ? { borderColor: '#e94560', background: 'rgba(233,69,96,0.2)' } : {}}>
+              {name} {name === playerName ? '(du)' : ''}
             </div>
           ))}
         </div>
-      )}
+      </div>
+
+      <div className="card animate-pulse" style={{ background: 'rgba(124,58,237,0.15)', border: '1px solid rgba(124,58,237,0.3)', textAlign: 'center' }}>
+        <p className="text-sm text-purple">Spelet börjar snart! 🚀</p>
+      </div>
     </div>
   )
 }

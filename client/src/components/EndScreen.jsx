@@ -1,30 +1,30 @@
 import { useState, useEffect } from 'react'
 import socket from '../socket'
 
-export default function EndScreen({ endData, isHost, playerName, players }) {
-  const [shotPicked, setShotPicked] = useState(false)
+export default function EndScreen({ endData, playerName, mySocketId, players }) {
   const [shotTarget, setShotTarget] = useState(null)
+  const [shotAssigned, setShotAssigned] = useState(null)
   const [revealed, setRevealed] = useState([])
 
   const isWinner = endData?.winner?.name === playerName
 
   useEffect(() => {
-    if (!endData?.finalPlayers) return
+    if (!endData) return
+    // Stagger reveal of non-winners
     const nonWinners = endData.finalPlayers.filter(p => p.name !== endData.winner?.name)
     nonWinners.forEach((p, i) => {
-      setTimeout(() => setRevealed(r => [...r, p.name]), i * 700 + 500)
+      setTimeout(() => setRevealed(r => [...r, p.name]), i * 600 + 400)
     })
   }, [endData])
 
   useEffect(() => {
-    socket.on('shot_assigned', ({ targetName }) => setShotTarget(targetName))
+    socket.on('shot_assigned', ({ targetName }) => setShotAssigned(targetName))
     return () => socket.off('shot_assigned')
   }, [])
 
   function assignShot(targetName) {
-    if (shotPicked) return
-    setShotPicked(true)
     socket.emit('assign_shot', { targetName })
+    setShotTarget(targetName)
   }
 
   function playAgain() {
@@ -32,65 +32,67 @@ export default function EndScreen({ endData, isHost, playerName, players }) {
   }
 
   if (!endData) return null
+
   const { winner, finalPlayers } = endData
-  const otherPlayers = (finalPlayers || []).filter(p => p.name !== winner?.name)
+  const otherPlayers = players.filter(name => name !== winner?.name)
 
   return (
-    <div style={{ width: '100%', paddingTop: '32px', textAlign: 'center' }}>
-      <div style={{ fontSize: '64px', marginBottom: '8px' }}>🏆</div>
-      <h1 style={{ fontSize: '36px', color: '#fbbf24', fontWeight: 900 }}>VINNARE!</h1>
-      <p style={{ fontSize: '28px', fontWeight: 900, color: '#e94560', marginTop: '6px', marginBottom: '28px' }}>
-        🎉 {winner?.name || '?'} 🎉
-      </p>
-
-      {shotTarget && (
-        <div style={{ background: 'rgba(233,69,96,0.15)', border: '1px solid #e94560', borderRadius: '14px', padding: '20px', marginBottom: '20px' }}>
-          <p style={{ fontSize: '20px', fontWeight: 700 }}>🥃 {winner?.name} ger ett shot till <span style={{ color: '#e94560' }}>{shotTarget}</span>!</p>
-        </div>
-      )}
-
-      {isWinner && !shotPicked && !shotTarget && otherPlayers.length > 0 && (
-        <div style={{ background: '#16213e', borderRadius: '14px', padding: '20px', marginBottom: '20px', textAlign: 'left' }}>
-          <p style={{ fontWeight: 700, marginBottom: '14px', color: '#22c55e', fontSize: '16px' }}>
-            🎯 Du vann! Välj vem som ska ta ett shot:
-          </p>
-          {otherPlayers.map((p, i) => (
-            <button key={i} onClick={() => assignShot(p.name)} style={{
-              display: 'block', width: '100%', background: '#e94560', color: 'white',
-              border: 'none', borderRadius: '10px', padding: '14px', fontSize: '16px',
-              fontWeight: 'bold', cursor: 'pointer', marginBottom: '10px', minHeight: '50px'
-            }}>
-              🥃 {p.name} tar ett shot
-            </button>
-          ))}
-        </div>
-      )}
-
-      <div style={{ background: '#16213e', borderRadius: '14px', padding: '20px', marginBottom: '24px', textAlign: 'left' }}>
-        <h3 style={{ color: '#7c3aed', fontSize: '13px', textTransform: 'uppercase', marginBottom: '14px' }}>Klunkbanken avslöjas</h3>
-        {otherPlayers.map((p, i) => (
-          <div key={i} style={{
-            background: p.name === playerName ? 'rgba(233,69,96,0.15)' : '#0f3460',
-            border: p.name === playerName ? '1px solid #e94560' : '1px solid transparent',
-            borderRadius: '10px', padding: '14px 16px', marginBottom: '10px',
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            opacity: revealed.includes(p.name) ? 1 : 0,
-            transform: revealed.includes(p.name) ? 'translateY(0)' : 'translateY(12px)',
-            transition: 'all 0.5s ease'
-          }}>
-            <span style={{ fontWeight: 700 }}>{p.name} {p.name === playerName ? '(du)' : ''}</span>
-            <span style={{ color: '#ff8585', fontWeight: 900, fontSize: '18px' }}>
-              {p.sipBank > 0 ? `Drick ${p.sipBank}! 🍺` : 'Ingen kvar'}
-            </span>
-          </div>
-        ))}
+    <div className="screen flex-col gap-lg text-center" style={{ paddingBottom: 32 }}>
+      <div className="animate-winner">
+        <div style={{ fontSize: '4rem', marginBottom: 8 }}>🏆</div>
+        <h1 style={{ color: '#fbbf24' }}>VINNARE!</h1>
+        <p style={{ fontSize: '1.8rem', fontWeight: 900, color: '#e94560', marginTop: 8 }}>
+          {winner?.name}
+        </p>
       </div>
 
-      <button onClick={playAgain} style={{
-        display: 'block', width: '100%', background: '#7c3aed', color: 'white',
-        border: 'none', borderRadius: '12px', padding: '17px', fontSize: '18px',
-        fontWeight: 'bold', cursor: 'pointer', minHeight: '56px'
-      }}>
+      {isWinner && !shotAssigned && (
+        <div className="card flex-col gap-md" style={{ background: 'rgba(233,69,96,0.15)', border: '1px solid #e94560' }}>
+          <p style={{ fontWeight: 700 }}>🎯 Du vann! Välj vem som ska ta ett shot:</p>
+          <div className="flex-col gap-sm">
+            {otherPlayers.map((name, i) => (
+              <button key={i} className="btn btn-outline" onClick={() => assignShot(name)}>
+                {name}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {shotAssigned && (
+        <div className="card" style={{ background: 'rgba(233,69,96,0.1)', border: '1px solid rgba(233,69,96,0.4)' }}>
+          <p style={{ fontWeight: 700, color: '#fbbf24' }}>
+            🥃 {winner?.name} ger ett shot till {shotAssigned}!
+          </p>
+        </div>
+      )}
+
+      {!isWinner && (
+        <div className="flex-col gap-md">
+          <h3>Klunkbanken avslöjas...</h3>
+          {finalPlayers
+            .filter(p => p.name !== winner?.name)
+            .map((p, i) => (
+              <div
+                key={i}
+                className="card"
+                style={{
+                  opacity: revealed.includes(p.name) ? 1 : 0,
+                  transform: revealed.includes(p.name) ? 'translateY(0)' : 'translateY(20px)',
+                  transition: 'all 0.5s ease',
+                  background: p.name === playerName ? 'rgba(233,69,96,0.15)' : 'rgba(255,255,255,0.06)'
+                }}
+              >
+                <p style={{ fontWeight: 700 }}>{p.name} {p.name === playerName ? '(du)' : ''}</p>
+                <p className="text-accent" style={{ fontSize: '1.4rem', fontWeight: 900, marginTop: 4 }}>
+                  {p.sipBank > 0 ? `Drick ${p.sipBank} klunkar! 🍺` : 'Ingen kvar!'}
+                </p>
+              </div>
+            ))}
+        </div>
+      )}
+
+      <button className="btn btn-secondary mt-auto" onClick={playAgain} style={{ marginTop: 16 }}>
         🔄 Spela igen
       </button>
     </div>
