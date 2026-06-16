@@ -1,18 +1,20 @@
 import { useState } from 'react'
 import socket from '../socket'
 
-export default function HomeScreen({ onStats }) {
-  const [mode, setMode] = useState(null) // null | 'join'
+export default function HomeScreen({ onStats, onHowToPlay }) {
+  const [mode, setMode] = useState(null) // null | 'create' | 'join'
+  const [hostName, setHostName] = useState('')
   const [code, setCode] = useState('')
-  const [name, setName] = useState('')
+  const [joinName, setJoinName] = useState('')
 
   function createGame() {
-    socket.emit('create_game')
+    if (!hostName.trim()) return
+    socket.emit('create_game', { name: hostName.trim() })
   }
 
   function joinGame() {
-    if (!code.trim() || !name.trim()) return
-    socket.emit('join_game', { code: code.trim().toUpperCase(), name: name.trim() })
+    if (!code.trim() || !joinName.trim()) return
+    socket.emit('join_game', { code: code.trim().toUpperCase(), name: joinName.trim() })
   }
 
   return (
@@ -27,14 +29,46 @@ export default function HomeScreen({ onStats }) {
 
       {!mode && (
         <div className="flex-col gap-md">
-          <button className="btn btn-primary" onClick={createGame}>
+          <button className="btn btn-primary" onClick={() => setMode('create')}>
             🎮 Skapa spel
           </button>
           <button className="btn btn-secondary" onClick={() => setMode('join')}>
             🔑 Gå med i spel
           </button>
-          <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888', marginTop: '8px' }} onClick={onStats}>
-            📊 Topplista
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888', flex: 1 }} onClick={onHowToPlay}>
+              ❓ Hur spelar man?
+            </button>
+            <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888', flex: 1 }} onClick={onStats}>
+              📊 Topplista
+            </button>
+          </div>
+        </div>
+      )}
+
+      {mode === 'create' && (
+        <div className="flex-col gap-md">
+          <div className="text-center">
+            <h2 style={{ marginBottom: 4 }}>Skapa spel</h2>
+            <p className="text-muted text-sm">Du är värd och spelar med!</p>
+          </div>
+          <div className="flex-col gap-sm">
+            <label className="text-sm text-muted">Ditt namn</label>
+            <input
+              type="text"
+              placeholder="Ange ditt namn"
+              value={hostName}
+              onChange={e => setHostName(e.target.value)}
+              maxLength={20}
+              onKeyDown={e => e.key === 'Enter' && createGame()}
+              autoFocus
+            />
+          </div>
+          <button className="btn btn-primary" onClick={createGame} disabled={!hostName.trim()}>
+            Skapa spel →
+          </button>
+          <button className="btn btn-ghost" onClick={() => setMode(null)}>
+            ← Tillbaka
           </button>
         </div>
       )}
@@ -58,13 +92,13 @@ export default function HomeScreen({ onStats }) {
             <input
               type="text"
               placeholder="Ange ditt namn"
-              value={name}
-              onChange={e => setName(e.target.value)}
+              value={joinName}
+              onChange={e => setJoinName(e.target.value)}
               maxLength={20}
               onKeyDown={e => e.key === 'Enter' && joinGame()}
             />
           </div>
-          <button className="btn btn-primary" onClick={joinGame} disabled={!code.trim() || !name.trim()}>
+          <button className="btn btn-primary" onClick={joinGame} disabled={!code.trim() || !joinName.trim()}>
             Gå med →
           </button>
           <button className="btn btn-ghost" onClick={() => setMode(null)}>

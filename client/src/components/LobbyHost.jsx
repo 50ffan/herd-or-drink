@@ -33,24 +33,18 @@ export default function LobbyHost({ gameCode, players }) {
         )}
       </div>
 
-      <div className="card" style={{ background: 'rgba(233,69,96,0.1)', border: '1px solid rgba(233,69,96,0.3)' }}>
-        <p className="text-sm" style={{ color: '#ff8fa3' }}>
-          🎮 Du är värd. Du spelar inte själv — låt spelarna ansluta med koden ovan.
-        </p>
-      </div>
-
       <div className="mt-auto">
         <button
           className="btn btn-primary"
           onClick={startGame}
-          disabled={players.length < 1}
+          disabled={players.length < 2}
           style={{ fontSize: '1.2rem', padding: '18px' }}
         >
           Starta spel →
         </button>
         {players.length < 2 && (
           <p className="text-muted text-sm text-center" style={{ marginTop: 8 }}>
-            Väntar på minst 1 spelare
+            Väntar på minst 2 spelare
           </p>
         )}
       </div>

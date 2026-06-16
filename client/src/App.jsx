@@ -7,6 +7,7 @@ import RoundScreen from './components/RoundScreen'
 import RevealScreen from './components/RevealScreen'
 import EndScreen from './components/EndScreen'
 import StatsScreen from './components/StatsScreen'
+import HowToPlay from './components/HowToPlay'
 
 export default function App() {
   const [screen, setScreen] = useState('home')
@@ -26,9 +27,10 @@ export default function App() {
     setMySocketId(socket.id)
     socket.on('connect', () => setMySocketId(socket.id))
 
-    socket.on('game_created', ({ code }) => {
+    socket.on('game_created', ({ code, name }) => {
       setGameCode(code)
       setIsHost(true)
+      if (name) setPlayerName(name)
       setScreen('lobbyHost')
     })
 
@@ -100,7 +102,8 @@ export default function App() {
   return (
     <div className="app">
       {error && <div className="error-toast">{error}</div>}
-      {screen === 'home' && <HomeScreen onStats={() => setScreen('stats')} />}
+      {screen === 'home' && <HomeScreen onStats={() => setScreen('stats')} onHowToPlay={() => setScreen('howtoplay')} />}
+      {screen === 'howtoplay' && <HowToPlay onBack={() => setScreen('home')} />}
       {screen === 'stats' && <StatsScreen onBack={() => setScreen('home')} />}
       {screen === 'lobbyHost' && <LobbyHost {...props} />}
       {screen === 'lobbyPlayer' && <LobbyPlayer {...props} />}

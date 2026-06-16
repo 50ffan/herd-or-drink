@@ -74,10 +74,14 @@ async function doReveal(gameCode) {
 io.on('connection', (socket) => {
   console.log('connected:', socket.id);
 
-  socket.on('create_game', () => {
+  socket.on('create_game', ({ name } = {}) => {
     const code = createGame(socket.id);
     socket.join(getRoom(code));
-    socket.emit('game_created', { code });
+    // Host joins as a player too if they provided a name
+    if (name && name.trim()) {
+      addPlayer(code, socket.id, name.trim());
+    }
+    socket.emit('game_created', { code, name: name?.trim() || '' });
     console.log('Game created:', code);
   });
 
