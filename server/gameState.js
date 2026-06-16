@@ -24,9 +24,8 @@ function createGame(hostSocketId) {
 function getGame(code) { return games[code] || null; }
 
 function addPlayer(code, socketId, name) {
-  if (!games[code]) return false;
+  if (!games[code]) return;
   games[code].players[socketId] = { name, sipBank: 12, totalResponseTime: 0 };
-  return true;
 }
 
 function removePlayer(code, socketId) {
@@ -53,6 +52,7 @@ function submitAnswer(code, socketId, text, responseTime) {
   games[code].players[socketId].totalResponseTime += responseTime;
 }
 
+// Simple fallback grouping (case-insensitive exact match)
 function fallbackGroup(answers) {
   const groups = {};
   for (const a of answers) {
@@ -64,11 +64,11 @@ function fallbackGroup(answers) {
 }
 
 const ROAST_TEMPLATES = [
-  (w) => `${w} är verkligen den mest förutsägbara personen i rummet – men förutsägbarhet är en dygd.`,
-  (w) => `Svaren är som en IKEA-manual – alla tror sig förstå, men det är bara ${w} som faktiskt gör det.`,
-  (w) => `Klart att ${w} vinner – de har övat på att vara mainstream sedan dagis.`,
-  (w) => `${w} och hjorden – beviset på att Sverige faktiskt är ett kollektivistiskt samhälle.`,
-  (w) => `Inte ens ett AI kan komma på roligare svar, men ${w} tar hem vinsten ändå.`,
+  (winner) => `${winner} är verkligen den mest förutsägbara personen i rummet – men förutsägbarhet är en dygd.`,
+  (winner) => `Svaren här är som en IKEA-manual – alla tror sig förstå, men det är bara ${winner} som faktiskt gör det.`,
+  (winner) => `Klart att ${winner} vinner – de har övat på att vara mainstream sedan dagis.`,
+  (winner) => `${winner} och hjorden – beviset på att Sverige faktiskt är ett kollektivistiskt samhälle.`,
+  (winner) => `Inte ens ett AI kan komma på en roligare grupp, men ${winner} tar hem vinsten ändå.`,
 ];
 const CHAOS_ROASTS = [
   'Kaos! Ingen tänkte likadant den här gången. Skål allihopa!',
@@ -87,78 +87,83 @@ function revealRound(code, aiGroupingResult) {
     responseTime: a.responseTime
   }));
 
-  if (answers.length === 0) {
-    game.roundHistory.push({ prompt: round.prompt, groups: [], isChaos: true });
-    game.status = 'reveal';
-    return { groups: [], herdLabel: null, isChaos: true, isUnanimous: false, randomChaosSips: 2, roast: 'Ingen svarade! Skäms och drick.', outcomes: [], gameOver: false, winner: null };
-  }
-
+  // Use AI grouping if available, otherwise fallback
   let groups;
   if (aiGroupingResult && aiGroupingResult.groups && aiGroupingResult.groups.length > 0) {
-    const nameToSocket = {};
-    for (const a of answers) nameToSocket[a.name] = a.socketId;
-    groups = aiGroupingResult.groups.map(g => ({
-      label: g.label,
-      members: g.members.map(m => ({
-        socketId: nameToSocket[m.name] || '',
-        name: m.name,
-        text: m.text,
-        responseTime: typeof m.responseTime === 'number' ? m.responseTime : 0
-      }))
-    }));
+    groups = aiGroupingResult.groups;
   } else {
     groups = fallbackGroup(answers);
   }
 
+  // Determine herd
   const maxSize = Math.max(...groups.map(g => g.members.length));
   const largestGroups = groups.filter(g => g.members.length === maxSize);
-  const isUnanimous = groups.length === 1 && groups[0].members.length === answers.length;
+  const totalPlayers = answers.length;
+
+  const isUnanimous = groups.length === 1 && groups[0].members.length === totalPlayers;
   const isChaos = !isUnanimous && (largestGroups.length > 1 || maxSize === 1);
 
-  let herdLabel = null, herdGroup = null, roast = '', randomChaosSips = null;
+  let herdLabel = null;
+  let herdGroup = null;
+  let roast = '';
+  let randomChaosSips = null;
   const outcomes = [];
 
   if (isChaos) {
-    randomChaosSips = Math.floor(Math.random() * 5) + 2;
+    randomChaosSips = Math.floor(Math.random() * 5) + 2; // 2-6
     roast = CHAOS_ROASTS[Math.floor(Math.random() * CHAOS_ROASTS.length)];
-    for (const a of answers) outcomes.push({ socketId: a.socketId, name: a.name, action: 'drink_now', amount: randomChaosSips });
+    for (const a of answers) {
+      outcomes.push({ socketId: a.socketId, name: a.name, action: 'drink_now', amount: randomChaosSips });
+    }
   } else {
     herdGroup = isUnanimous ? groups[0] : largestGroups[0];
     herdLabel = herdGroup.label;
+
+    // Sort herd members by response time
     const herdMembers = [...herdGroup.members].sort((a, b) => a.responseTime - b.responseTime);
     const outliers = answers.filter(a => !herdGroup.members.find(m => m.socketId === a.socketId));
 
+    // Herd deductions
     herdMembers.forEach((member, i) => {
       const deduct = i === 0 ? 3 : i === 1 ? 2 : 1;
-      if (game.players[member.socketId]) game.players[member.socketId].sipBank -= deduct;
+      game.players[member.socketId].sipBank -= deduct;
       outcomes.push({ socketId: member.socketId, name: member.name, action: 'sip_bank_deduct', amount: deduct });
     });
 
+    // Outlier drinking (only if not unanimous)
     if (!isUnanimous) {
-      for (const o of outliers) outcomes.push({ socketId: o.socketId, name: o.name, action: 'drink_now', amount: 2 });
+      for (const o of outliers) {
+        outcomes.push({ socketId: o.socketId, name: o.name, action: 'drink_now', amount: 2 });
+      }
     }
 
     const winnerName = herdMembers[0]?.name || 'Någon';
-    const fn = ROAST_TEMPLATES[Math.floor(Math.random() * ROAST_TEMPLATES.length)];
-    roast = (aiGroupingResult && aiGroupingResult.roast) ? aiGroupingResult.roast : fn(winnerName);
+    const roastFn = ROAST_TEMPLATES[Math.floor(Math.random() * ROAST_TEMPLATES.length)];
+    roast = aiGroupingResult?.roast || roastFn(winnerName);
   }
 
-  let gameOver = false, winner = null;
+  // Check end-game
+  let gameOver = false;
+  let winner = null;
   const depleted = Object.entries(game.players).filter(([, p]) => p.sipBank <= 0);
   if (depleted.length > 0) {
     gameOver = true;
-    depleted.sort((a, b) => a[1].sipBank !== b[1].sipBank ? a[1].sipBank - b[1].sipBank : a[1].totalResponseTime - b[1].totalResponseTime);
-    const [wId, wData] = depleted[0];
-    winner = { socketId: wId, name: wData.name };
+    depleted.sort((a, b) => {
+      if (a[1].sipBank !== b[1].sipBank) return a[1].sipBank - b[1].sipBank;
+      return a[1].totalResponseTime - b[1].totalResponseTime;
+    });
+    const [winnerId, winnerData] = depleted[0];
+    winner = { socketId: winnerId, name: winnerData.name };
     game.status = 'ended';
-  } else {
-    game.status = 'reveal';
   }
 
+  // Save to history
+  round.groupingResult = { groups, herdLabel, isChaos, isUnanimous };
   round.isChaos = isChaos;
   round.isUnanimous = isUnanimous;
   round.randomChaosSips = randomChaosSips;
   game.roundHistory.push({ prompt: round.prompt, groups, isChaos });
+  if (!gameOver) game.status = 'reveal';
 
   return {
     groups: groups.map(g => ({
@@ -166,9 +171,14 @@ function revealRound(code, aiGroupingResult) {
       members: g.members.map(m => ({ name: m.name, answer: m.text, responseTime: m.responseTime })),
       isHerd: !isChaos && g.label === herdLabel
     })),
-    herdLabel, isChaos, isUnanimous, randomChaosSips, roast,
+    herdLabel,
+    isChaos,
+    isUnanimous,
+    randomChaosSips,
+    roast,
     outcomes: outcomes.map(o => ({ name: o.name, action: o.action, amount: o.amount })),
-    gameOver, winner
+    gameOver,
+    winner
   };
 }
 
@@ -184,4 +194,10 @@ function resetGame(code) {
   game.roundHistory = [];
 }
 
-module.exports = { games, createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame };
+function getAllPlayerNames(code) {
+  const game = games[code];
+  if (!game) return [];
+  return Object.values(game.players).map(p => p.name);
+}
+
+module.exports = { games, createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame, getAllPlayerNames };

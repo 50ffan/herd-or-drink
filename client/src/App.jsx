@@ -15,13 +15,14 @@ export default function App() {
   const [players, setPlayers] = useState([])
   const [currentPrompt, setCurrentPrompt] = useState('')
   const [roundDuration, setRoundDuration] = useState(25)
+  const [roundNumber, setRoundNumber] = useState(0)
   const [revealData, setRevealData] = useState(null)
   const [endData, setEndData] = useState(null)
   const [mySocketId, setMySocketId] = useState('')
-  const [roundNumber, setRoundNumber] = useState(0)
-  const [shotNotice, setShotNotice] = useState('')
+  const [error, setError] = useState('')
 
   useEffect(() => {
+    setMySocketId(socket.id)
     socket.on('connect', () => setMySocketId(socket.id))
 
     socket.on('game_created', ({ code }) => {
@@ -32,6 +33,8 @@ export default function App() {
 
     socket.on('joined_game', ({ code, name }) => {
       setGameCode(code)
+      setPlayerName(name)
+      setIsHost(false)
       setScreen('lobbyPlayer')
     })
 
@@ -39,36 +42,21 @@ export default function App() {
       setPlayers(players)
     })
 
-    socket.on('play_again_reset', () => {
-      setScreen(prev => {
-        return isHost ? 'lobbyHost' : 'lobbyPlayer'
-      })
-      setRevealData(null)
-      setEndData(null)
-      setRoundNumber(0)
-    })
-
     socket.on('game_started', () => {
       setScreen('round')
-      setRoundNumber(0)
     })
 
     socket.on('round_start', ({ prompt, duration, roundNumber: rn }) => {
       setCurrentPrompt(prompt)
       setRoundDuration(duration)
-      setRoundNumber(rn)
+      setRoundNumber(rn || 0)
       setRevealData(null)
       setScreen('round')
     })
 
     socket.on('round_reveal', (data) => {
       setRevealData(data)
-      if (data.gameOver) {
-        setEndData(data)
-        setScreen('ended')
-      } else {
-        setScreen('reveal')
-      }
+      setScreen('reveal')
     })
 
     socket.on('game_ended', (data) => {
@@ -76,12 +64,19 @@ export default function App() {
       setScreen('ended')
     })
 
+    socket.on('back_to_lobby', () => {
+      setRevealData(null)
+      setEndData(null)
+      setScreen(isHost ? 'lobbyHost' : 'lobbyPlayer')
+    })
+
     socket.on('shot_assigned', ({ targetName }) => {
-      setShotNotice(`${targetName} ska ta ett shot! 🥃`)
+      // handled in EndScreen
     })
 
     socket.on('error', ({ message }) => {
-      alert(message)
+      setError(message)
+      setTimeout(() => setError(''), 4000)
     })
 
     return () => {
@@ -89,75 +84,27 @@ export default function App() {
       socket.off('game_created')
       socket.off('joined_game')
       socket.off('lobby_update')
-      socket.off('play_again_reset')
       socket.off('game_started')
       socket.off('round_start')
       socket.off('round_reveal')
       socket.off('game_ended')
+      socket.off('back_to_lobby')
       socket.off('shot_assigned')
       socket.off('error')
     }
   }, [isHost])
 
-  const createGame = (name) => {
-    setPlayerName(name)
-    socket.emit('create_game', { name })
-  }
-
-  const joinGame = (code, name) => {
-    setPlayerName(name)
-    socket.emit('join_game', { code, name })
-  }
-
-  const startGame = () => socket.emit('start_game')
-  const submitAnswer = (text) => socket.emit('submit_answer', { text })
-  const nextRound = () => socket.emit('next_round')
-  const playAgain = () => socket.emit('play_again')
-  const assignShot = (targetSocketId) => socket.emit('assign_shot', { targetSocketId })
-
-  const containerStyle = {
-    minHeight: '100vh',
-    background: '#1a1a2e',
-    color: 'white',
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    padding: '16px',
-    maxWidth: '600px',
-    margin: '0 auto'
-  }
+  const props = { gameCode, playerName, isHost, players, currentPrompt, roundDuration, roundNumber, revealData, endData, mySocketId }
 
   return (
-    <div style={containerStyle}>
-      {shotNotice && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(0,0,0,0.85)', display: 'flex', alignItems: 'center',
-          justifyContent: 'center', zIndex: 1000, padding: '24px'
-        }}>
-          <div style={{
-            background: '#16213e', borderRadius: '16px', padding: '32px',
-            textAlign: 'center', maxWidth: '400px'
-          }}>
-            <div style={{ fontSize: '64px' }}>🥃</div>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', marginTop: '16px', color: '#e94560' }}>
-              {shotNotice}
-            </div>
-            <button onClick={() => setShotNotice('')} style={{
-              marginTop: '24px', background: '#e94560', color: 'white',
-              border: 'none', borderRadius: '8px', padding: '12px 32px',
-              fontSize: '16px', cursor: 'pointer', minHeight: '48px'
-            }}>OK</button>
-          </div>
-        </div>
-      )}
-
-      {screen === 'home' && <HomeScreen createGame={createGame} joinGame={joinGame} />}
-      {screen === 'lobbyHost' && <LobbyHost gameCode={gameCode} players={players} startGame={startGame} />}
-      {screen === 'lobbyPlayer' && <LobbyPlayer gameCode={gameCode} playerName={playerName} players={players} />}
-      {screen === 'round' && <RoundScreen prompt={currentPrompt} duration={roundDuration} submitAnswer={submitAnswer} roundNumber={roundNumber} />}
-      {screen === 'reveal' && <RevealScreen revealData={revealData} isHost={isHost} nextRound={nextRound} mySocketId={mySocketId} />}
-      {screen === 'ended' && <EndScreen endData={endData} isHost={isHost} playerName={playerName} mySocketId={mySocketId} players={players} playAgain={playAgain} assignShot={assignShot} />}
+    <div className="app">
+      {error && <div className="error-toast">{error}</div>}
+      {screen === 'home' && <HomeScreen />}
+      {screen === 'lobbyHost' && <LobbyHost {...props} />}
+      {screen === 'lobbyPlayer' && <LobbyPlayer {...props} />}
+      {screen === 'round' && <RoundScreen {...props} />}
+      {screen === 'reveal' && <RevealScreen {...props} />}
+      {screen === 'ended' && <EndScreen {...props} />}
     </div>
   )
 }

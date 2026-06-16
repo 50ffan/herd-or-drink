@@ -1,34 +1,25 @@
 export default function LobbyPlayer({ gameCode, playerName, players }) {
   return (
-    <div style={{ width: '100%', paddingTop: '24px', textAlign: 'center' }}>
+    <div style={{ width: '100%', paddingTop: '48px', textAlign: 'center' }}>
       <div style={{ fontSize: '48px', marginBottom: '16px' }}>⏳</div>
-      <h1 style={{ color: '#e94560', fontSize: '24px', marginBottom: '8px' }}>
-        Väntar på att värden startar spelet...
-      </h1>
-      <p style={{ color: '#aaa', marginBottom: '24px' }}>
-        Du spelar som <strong style={{ color: 'white' }}>{playerName}</strong>
-      </p>
+      <h2 style={{ fontSize: '24px', marginBottom: '8px' }}>Hej, {playerName}!</h2>
+      <p style={{ color: '#888', marginBottom: '32px' }}>Spelkod: <strong style={{ color: '#e94560' }}>{gameCode}</strong></p>
+      <p style={{ color: '#aaa' }}>Väntar på att värden startar spelet...</p>
 
-      <div style={{ background: '#16213e', borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-        <p style={{ color: '#aaa', fontSize: '14px' }}>Spelkod</p>
-        <div style={{ fontSize: '36px', fontWeight: 'bold', color: '#e94560', letterSpacing: '4px', fontFamily: 'monospace' }}>
-          {gameCode}
+      {players.length > 0 && (
+        <div style={{ background: '#16213e', borderRadius: '14px', padding: '20px', marginTop: '28px', textAlign: 'left' }}>
+          <h3 style={{ color: '#7c3aed', marginBottom: '12px', fontSize: '14px', textTransform: 'uppercase' }}>Spelare i lobbyn</h3>
+          {players.map((name, i) => (
+            <div key={i} style={{
+              background: name === playerName ? 'rgba(233,69,96,0.2)' : '#0f3460',
+              border: name === playerName ? '1px solid #e94560' : '1px solid transparent',
+              borderRadius: '8px', padding: '10px 14px', marginBottom: '8px', fontWeight: 600
+            }}>
+              {name === playerName ? '⭐ ' : '👤 '}{name}
+            </div>
+          ))}
         </div>
-      </div>
-
-      <div style={{ background: '#16213e', borderRadius: '12px', padding: '20px' }}>
-        <h2 style={{ fontSize: '16px', color: '#7c3aed', marginBottom: '12px' }}>
-          Spelare ({players.length})
-        </h2>
-        {players.map((name, i) => (
-          <div key={i} style={{
-            padding: '10px 16px', background: '#0f3460',
-            borderRadius: '8px', marginBottom: '8px', fontSize: '15px'
-          }}>
-            👤 {name}
-          </div>
-        ))}
-      </div>
+      )}
     </div>
   )
 }
