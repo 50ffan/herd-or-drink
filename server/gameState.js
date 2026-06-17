@@ -1,4 +1,5 @@
 const games = {};
+const { normalize, extractIntent, similarity } = require('./textNormalize');
 
 function generateCode() {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -16,9 +17,31 @@ function createGame(hostSocketId) {
     players: {},
     currentRound: null,
     roundHistory: [],
+    recentQuestionIds: [],
+    recentCategories: [],
+    recentTags: [],
     _roundTimer: null
   };
   return code;
+}
+
+// Records the question that was just asked so future selection can avoid repeats
+// and prefer category/tag diversity. Caps each tracker at 20 entries.
+function trackQuestion(code, q) {
+  const game = games[code];
+  if (!game || !q) return;
+  if (q.id != null) {
+    game.recentQuestionIds.push(q.id);
+    if (game.recentQuestionIds.length > 20) game.recentQuestionIds.shift();
+  }
+  if (q.category) {
+    game.recentCategories.push(q.category);
+    if (game.recentCategories.length > 20) game.recentCategories.shift();
+  }
+  if (q.tags) {
+    game.recentTags.push(q.tags);
+    if (game.recentTags.length > 20) game.recentTags.shift();
+  }
 }
 
 function getGame(code) { return games[code] || null; }
@@ -52,15 +75,28 @@ function submitAnswer(code, socketId, text, responseTime) {
   games[code].players[socketId].totalResponseTime += responseTime;
 }
 
-// Simple fallback grouping (case-insensitive exact match)
+// Two-layer fallback grouping (used when no ANTHROPIC_API_KEY is set):
+// 1) normalize (case/punctuation/whitespace/lemma/synonyms)
+// 2) match by strict deterministic intent pattern, else exact normalized text,
+//    else fuzzy similarity (>85%) as a last resort for typos
 function fallbackGroup(answers) {
-  const groups = {};
+  const buckets = [];
   for (const a of answers) {
-    const key = a.text.toLowerCase().trim();
-    if (!groups[key]) groups[key] = [];
-    groups[key].push(a);
+    const normalized = normalize(a.text);
+    const intent = extractIntent(a.text);
+    const key = intent || normalized;
+
+    let bucket = buckets.find(b => b.key === key);
+    if (!bucket && !intent) {
+      bucket = buckets.find(b => !b.intent && similarity(b.normalized, normalized) >= 0.85);
+    }
+    if (!bucket) {
+      bucket = { key, intent, normalized, members: [] };
+      buckets.push(bucket);
+    }
+    bucket.members.push(a);
   }
-  return Object.entries(groups).map(([label, members]) => ({ label, members }));
+  return buckets.map(b => ({ label: b.members[0].text, members: b.members }));
 }
 
 const ROAST_TEMPLATES = [
@@ -222,6 +258,9 @@ function resetGame(code) {
   game.status = 'lobby';
   game.currentRound = null;
   game.roundHistory = [];
+  game.recentQuestionIds = [];
+  game.recentCategories = [];
+  game.recentTags = [];
 }
 
 function getAllPlayerNames(code) {
@@ -230,4 +269,4 @@ function getAllPlayerNames(code) {
   return Object.values(game.players).map(p => p.name);
 }
 
-module.exports = { games, createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame, getAllPlayerNames };
+module.exports = { games, createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame, getAllPlayerNames, trackQuestion };

@@ -3,7 +3,7 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
-const { createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame, getAllPlayerNames } = require('./gameState');
+const { createGame, getGame, addPlayer, removePlayer, startRound, submitAnswer, revealRound, resetGame, getAllPlayerNames, trackQuestion } = require('./gameState');
 const { generatePrompt, groupAnswers } = require('./aiService');
 const { saveGameResult } = require('./supabase');
 
@@ -109,11 +109,18 @@ io.on('connection', (socket) => {
     }
 
     game.status = 'round';
-    const prompt = await generatePrompt(game.roundHistory.map(r => r.prompt));
-    startRound(gameCode, prompt);
+    const roundNumber = game.roundHistory.length + 1;
+    const q = await generatePrompt({
+      roundNumber,
+      recentQuestionIds: game.recentQuestionIds,
+      recentCategories: game.recentCategories,
+      recentTags: game.recentTags
+    });
+    trackQuestion(gameCode, q);
+    startRound(gameCode, q.question);
 
     io.to(getRoom(gameCode)).emit('game_started', {});
-    io.to(getRoom(gameCode)).emit('round_start', { prompt, duration: 25, roundNumber: game.roundHistory.length + 1 });
+    io.to(getRoom(gameCode)).emit('round_start', { prompt: q.question, duration: 25, roundNumber });
 
     // auto-reveal after 25s if not everyone submitted
     game._roundTimer = setTimeout(() => doReveal(gameCode), 25000);
@@ -146,10 +153,17 @@ io.on('connection', (socket) => {
     const [gameCode, game] = entry;
 
     game.status = 'round';
-    const prompt = await generatePrompt(game.roundHistory.map(r => r.prompt));
-    startRound(gameCode, prompt);
+    const roundNumber = game.roundHistory.length + 1;
+    const q = await generatePrompt({
+      roundNumber,
+      recentQuestionIds: game.recentQuestionIds,
+      recentCategories: game.recentCategories,
+      recentTags: game.recentTags
+    });
+    trackQuestion(gameCode, q);
+    startRound(gameCode, q.question);
 
-    io.to(getRoom(gameCode)).emit('round_start', { prompt, duration: 25, roundNumber: game.roundHistory.length });
+    io.to(getRoom(gameCode)).emit('round_start', { prompt: q.question, duration: 25, roundNumber });
 
     game._roundTimer = setTimeout(() => doReveal(gameCode), 25000);
   });
