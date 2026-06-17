@@ -69,10 +69,24 @@ const ROAST_TEMPLATES = [
   (winner) => `Klart att ${winner} vinner – de har övat på att vara mainstream sedan dagis.`,
   (winner) => `${winner} och flocken – beviset på att Sverige faktiskt är ett kollektivistiskt samhälle.`,
   (winner) => `Inte ens ett AI kan komma på en roligare grupp, men ${winner} tar hem vinsten ändå.`,
+  (winner) => `${winner} tänker exakt som alla andra – grattis till att vara hundra procent genomsnittlig.`,
+  (winner) => `Forskning visar att ${winner} skulle klara sig perfekt i en hjord av lämlar.`,
+  (winner) => `${winner} har officiellt världens minst originella hjärna i rummet just nu.`,
+  (winner) => `Om konformitet var en sport hade ${winner} tagit guld utan att svettas.`,
+  (winner) => `${winner} – stolt medlem av "Jag tänker som alla andra"-klubben sedan idag.`,
+  (winner) => `Ingen är förvånad att ${winner} hamnade här. Verkligen ingen.`,
+  (winner) => `${winner} bevisar att man kan vinna utan en enda egen tanke.`,
+  (winner) => `Snyggt jobbat ${winner}, du har precis vunnit ett mästerskap i att vara som alla andra.`,
+  (winner) => `${winner} skulle förmodligen också säga "skål" om alla andra hoppade från en bro.`,
 ];
 const CHAOS_ROASTS = [
   'Kaos! Ingen tänkte likadant den här gången. Skål allihopa!',
-  'Det var precis lika rörigt som en midsommarfirning. Drick upp!'
+  'Det var precis lika rörigt som en midsommarfirning. Drick upp!',
+  'Total anarki i svaren – ingen flock, bara individualister. Skål på det!',
+  'Det här var mer spritt än julbordet på en svensk arbetsplats. Alla dricker!',
+  'Ingen hjord hittades – ni är officiellt för unika för det här spelet. Skål!',
+  'Lika synkade som ett IKEA-möte utan instruktioner. Drick upp, allihopa!',
+  'Det här kaoset hade gjort en flockmentalitetsexpert arbetslös. Skål!',
 ];
 
 function revealRound(code, aiGroupingResult) {
@@ -87,8 +101,28 @@ function revealRound(code, aiGroupingResult) {
     responseTime: a.responseTime
   }));
 
+  // Players who never submitted within the time limit
+  const noAnswerIds = Object.keys(game.players).filter(sid => !round.answers[sid]);
+  const outcomes = [];
+  for (const sid of noAnswerIds) {
+    outcomes.push({ socketId: sid, name: game.players[sid].name, action: 'drink_now', amount: 4 });
+  }
+
+  let groups = [];
+  let herdLabel = null;
+  let herdGroup = null;
+  let roast = '';
+  let randomChaosSips = null;
+  let isChaos = false;
+  let isUnanimous = false;
+
+  if (answers.length === 0) {
+    // Everyone timed out
+    isChaos = true;
+    roast = CHAOS_ROASTS[Math.floor(Math.random() * CHAOS_ROASTS.length)];
+  } else {
+
   // Use AI grouping if available, otherwise fallback
-  let groups;
   if (aiGroupingResult && aiGroupingResult.groups && aiGroupingResult.groups.length > 0) {
     groups = aiGroupingResult.groups;
   } else {
@@ -100,14 +134,8 @@ function revealRound(code, aiGroupingResult) {
   const largestGroups = groups.filter(g => g.members.length === maxSize);
   const totalPlayers = answers.length;
 
-  const isUnanimous = groups.length === 1 && groups[0].members.length === totalPlayers;
-  const isChaos = !isUnanimous && (largestGroups.length > 1 || maxSize === 1);
-
-  let herdLabel = null;
-  let herdGroup = null;
-  let roast = '';
-  let randomChaosSips = null;
-  const outcomes = [];
+  isUnanimous = groups.length === 1 && groups[0].members.length === totalPlayers;
+  isChaos = !isUnanimous && (largestGroups.length > 1 || maxSize === 1);
 
   if (isChaos) {
     randomChaosSips = Math.floor(Math.random() * 5) + 2; // 2-6
@@ -141,6 +169,7 @@ function revealRound(code, aiGroupingResult) {
     const roastFn = ROAST_TEMPLATES[Math.floor(Math.random() * ROAST_TEMPLATES.length)];
     roast = aiGroupingResult?.roast || roastFn(winnerName);
   }
+  }
 
   // Check end-game
   let gameOver = false;
@@ -166,6 +195,7 @@ function revealRound(code, aiGroupingResult) {
   if (!gameOver) game.status = 'reveal';
 
   return {
+    prompt: round.prompt,
     groups: groups.map(g => ({
       label: g.label,
       members: g.members.map(m => ({ name: m.name, answer: m.text, responseTime: m.responseTime })),

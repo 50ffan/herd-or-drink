@@ -3,7 +3,7 @@ import socket from '../socket'
 export default function RevealScreen({ revealData, isHost, playerName }) {
   if (!revealData) return null
 
-  const { groups, herdLabel, isChaos, isUnanimous, randomChaosSips, roast, outcomes, gameOver } = revealData
+  const { prompt, groups, herdLabel, isChaos, isUnanimous, randomChaosSips, roast, outcomes, gameOver } = revealData
 
   function nextRound() {
     socket.emit('next_round')
@@ -14,6 +14,13 @@ export default function RevealScreen({ revealData, isHost, playerName }) {
       <h2 style={{ textAlign: 'center' }}>
         {isChaos ? '🌀 Kaosrunda!' : isUnanimous ? '🐑 Alla tänkte likadant!' : '🏆 Avslöjandet'}
       </h2>
+
+      {prompt && (
+        <div className="card text-center" style={{ background: 'rgba(255,255,255,0.05)' }}>
+          <p className="text-muted text-sm" style={{ marginBottom: 4 }}>Frågan var</p>
+          <p style={{ fontWeight: 600 }}>{prompt}</p>
+        </div>
+      )}
 
       {isChaos && (
         <div className="card text-center" style={{ background: 'rgba(233,69,96,0.15)', border: '1px solid #e94560' }}>
