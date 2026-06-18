@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import socket from '../socket'
 
-export default function HomeScreen({ onStats, onHowToPlay }) {
+export default function HomeScreen({ onHowToPlay }) {
   const [mode, setMode] = useState(null) // null | 'create' | 'join'
   const [hostName, setHostName] = useState('')
   const [code, setCode] = useState('')
@@ -35,14 +35,9 @@ export default function HomeScreen({ onStats, onHowToPlay }) {
           <button className="btn btn-secondary" onClick={() => setMode('join')}>
             🔑 Gå med i spel
           </button>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888', flex: 1 }} onClick={onHowToPlay}>
-              ❓ Hur spelar man?
-            </button>
-            <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888', flex: 1 }} onClick={onStats}>
-              📊 Topplista
-            </button>
-          </div>
+          <button className="btn btn-ghost" style={{ border: '1px solid rgba(255,255,255,0.15)', color: '#888' }} onClick={onHowToPlay}>
+            ❓ Hur spelar man?
+          </button>
         </div>
       )}
 

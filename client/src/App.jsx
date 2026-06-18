@@ -6,7 +6,6 @@ import LobbyPlayer from './components/LobbyPlayer'
 import RoundScreen from './components/RoundScreen'
 import RevealScreen from './components/RevealScreen'
 import EndScreen from './components/EndScreen'
-import StatsScreen from './components/StatsScreen'
 import HowToPlay from './components/HowToPlay'
 
 export default function App() {
@@ -102,9 +101,8 @@ export default function App() {
   return (
     <div className="app">
       {error && <div className="error-toast">{error}</div>}
-      {screen === 'home' && <HomeScreen onStats={() => setScreen('stats')} onHowToPlay={() => setScreen('howtoplay')} />}
+      {screen === 'home' && <HomeScreen onHowToPlay={() => setScreen('howtoplay')} />}
       {screen === 'howtoplay' && <HowToPlay onBack={() => setScreen('home')} />}
-      {screen === 'stats' && <StatsScreen onBack={() => setScreen('home')} />}
       {screen === 'lobbyHost' && <LobbyHost {...props} />}
       {screen === 'lobbyPlayer' && <LobbyPlayer {...props} />}
       {screen === 'round' && <RoundScreen {...props} />}
