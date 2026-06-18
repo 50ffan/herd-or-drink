@@ -1,14 +1,14 @@
 import { useState, useEffect } from 'react'
 import socket from '../socket'
 
-export default function RoundScreen({ currentPrompt, roundDuration, roundNumber }) {
+export default function RoundScreen({ currentPrompt, roundDuration, roundNumber, alreadyAnswered }) {
   const [answer, setAnswer] = useState('')
-  const [submitted, setSubmitted] = useState(false)
+  const [submitted, setSubmitted] = useState(!!alreadyAnswered)
   const [timeLeft, setTimeLeft] = useState(roundDuration)
 
   useEffect(() => {
     setAnswer('')
-    setSubmitted(false)
+    setSubmitted(!!alreadyAnswered)
     setTimeLeft(roundDuration)
   }, [currentPrompt, roundDuration])
 

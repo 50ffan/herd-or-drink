@@ -48,7 +48,7 @@ function getGame(code) { return games[code] || null; }
 
 function addPlayer(code, socketId, name) {
   if (!games[code]) return;
-  games[code].players[socketId] = { name, sipBank: 12, totalResponseTime: 0 };
+  games[code].players[socketId] = { name, sipBank: 12, totalResponseTime: 0, disconnected: false, disconnectTimer: null };
 }
 
 function removePlayer(code, socketId) {

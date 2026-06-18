@@ -17,12 +17,15 @@ if (process.env.NODE_ENV === 'production') {
   app.get('*', (req, res) => res.sendFile(path.join(__dirname, '../client/dist/index.html')));
 }
 
+const ROUND_DURATION = 25;
+const DISCONNECT_GRACE_MS = 30000;
+
 function getRoom(gameCode) { return `game:${gameCode}`; }
 
 function emitLobbyUpdate(gameCode) {
   const game = getGame(gameCode);
   if (!game) return;
-  const players = Object.values(game.players).map(p => p.name);
+  const players = Object.values(game.players).filter(p => !p.disconnected).map(p => p.name);
   io.to(getRoom(gameCode)).emit('lobby_update', { players });
 }
 
@@ -48,6 +51,7 @@ async function doReveal(gameCode) {
   const revealData = revealRound(gameCode, groupingResult);
   if (!revealData) return;
 
+  game.lastRevealData = revealData;
   io.to(getRoom(gameCode)).emit('round_reveal', revealData);
 
   if (revealData.gameOver) {
@@ -56,10 +60,9 @@ async function doReveal(gameCode) {
       const g = getGame(gameCode);
       if (!g) return;
       const finalPlayers = Object.values(g.players).map(p => ({ name: p.name, sipBank: p.sipBank }));
-      io.to(getRoom(gameCode)).emit('game_ended', {
-        winner: revealData.winner,
-        finalPlayers
-      });
+      const endData = { winner: revealData.winner, finalPlayers };
+      g.lastEndData = endData;
+      io.to(getRoom(gameCode)).emit('game_ended', endData);
       // Save to Supabase
       saveGameResult({
         gameCode,
@@ -120,10 +123,10 @@ io.on('connection', (socket) => {
     startRound(gameCode, q.question);
 
     io.to(getRoom(gameCode)).emit('game_started', {});
-    io.to(getRoom(gameCode)).emit('round_start', { prompt: q.question, duration: 25, roundNumber });
+    io.to(getRoom(gameCode)).emit('round_start', { prompt: q.question, duration: ROUND_DURATION, roundNumber });
 
-    // auto-reveal after 25s if not everyone submitted
-    game._roundTimer = setTimeout(() => doReveal(gameCode), 25000);
+    // auto-reveal after the round duration if not everyone submitted
+    game._roundTimer = setTimeout(() => doReveal(gameCode), ROUND_DURATION * 1000);
   });
 
   socket.on('submit_answer', ({ text }) => {
@@ -163,9 +166,9 @@ io.on('connection', (socket) => {
     trackQuestion(gameCode, q);
     startRound(gameCode, q.question);
 
-    io.to(getRoom(gameCode)).emit('round_start', { prompt: q.question, duration: 25, roundNumber });
+    io.to(getRoom(gameCode)).emit('round_start', { prompt: q.question, duration: ROUND_DURATION, roundNumber });
 
-    game._roundTimer = setTimeout(() => doReveal(gameCode), 25000);
+    game._roundTimer = setTimeout(() => doReveal(gameCode), ROUND_DURATION * 1000);
   });
 
   socket.on('assign_shot', ({ targetName, targetSocketId }) => {
@@ -188,16 +191,77 @@ io.on('connection', (socket) => {
     io.to(getRoom(gameCode)).emit('back_to_lobby', {});
   });
 
+  socket.on('rejoin_game', ({ code, name }) => {
+    const game = getGame(code);
+    if (!game) { socket.emit('rejoin_failed', {}); return; }
+    const entry = Object.entries(game.players).find(([, p]) => p.disconnected && p.name === name);
+    if (!entry) { socket.emit('rejoin_failed', {}); return; }
+    const [oldSocketId, player] = entry;
+
+    clearTimeout(player.disconnectTimer);
+    player.disconnectTimer = null;
+    player.disconnected = false;
+    delete game.players[oldSocketId];
+    game.players[socket.id] = player;
+    if (game.hostSocketId === oldSocketId) game.hostSocketId = socket.id;
+
+    // Carry over an already-submitted answer for this round, if any
+    let alreadyAnswered = false;
+    if (game.currentRound && game.currentRound.answers[oldSocketId]) {
+      game.currentRound.answers[socket.id] = game.currentRound.answers[oldSocketId];
+      delete game.currentRound.answers[oldSocketId];
+      alreadyAnswered = true;
+    }
+
+    socket.join(getRoom(code));
+    emitLobbyUpdate(code);
+
+    const payload = {
+      code,
+      name,
+      isHost: game.hostSocketId === socket.id,
+      status: game.status,
+      players: Object.values(game.players).filter(p => !p.disconnected).map(p => p.name)
+    };
+
+    if (game.status === 'round' && game.currentRound) {
+      const elapsed = (Date.now() - game.currentRound.startTime) / 1000;
+      payload.prompt = game.currentRound.prompt;
+      payload.duration = Math.max(0, Math.ceil(ROUND_DURATION - elapsed));
+      payload.roundNumber = game.roundHistory.length + 1;
+      payload.alreadyAnswered = alreadyAnswered;
+    } else if (game.status === 'reveal' && game.lastRevealData) {
+      payload.revealData = game.lastRevealData;
+    } else if (game.status === 'ended' && game.lastEndData) {
+      payload.endData = game.lastEndData;
+    }
+
+    socket.emit('rejoined', payload);
+  });
+
   socket.on('disconnect', () => {
     console.log('disconnected:', socket.id);
     const { games } = require('./gameState');
     // find if this socket is in any game as player
     const entry = Object.entries(games).find(([, g]) => g.players[socket.id]);
-    if (entry) {
-      const [gameCode] = entry;
+    if (!entry) return;
+    const [gameCode, game] = entry;
+
+    if (game.status === 'ended') {
       removePlayer(gameCode, socket.id);
       emitLobbyUpdate(gameCode);
+      return;
     }
+
+    // Grace period: keep the player's state (sip bank, etc.) so a brief
+    // wifi drop or screen-lock doesn't kick them out of the game.
+    const player = game.players[socket.id];
+    player.disconnected = true;
+    emitLobbyUpdate(gameCode);
+    player.disconnectTimer = setTimeout(() => {
+      removePlayer(gameCode, socket.id);
+      emitLobbyUpdate(gameCode);
+    }, DISCONNECT_GRACE_MS);
   });
 });
 
